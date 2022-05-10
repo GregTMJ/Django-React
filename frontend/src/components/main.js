@@ -16,26 +16,25 @@ export default class Units extends Component {
         }
     }
 
-    componentDidMount() {
-        units.getUnits()
-            .then(
-                response => {
-                    if (response.status > 400) {
-                        return this.setState(() => {
-                            return {placeholder: "Something went wrong!"};
-                        })
-                    } else {
-                        const rawData = response.data;
-                        // console.log(rawData)
-                        return this.setState(() => {
-                            return {
-                                data: rawData,
-                                loaded: true,
-                            }
-                        })
-                    }
+    async unitsData(){
+        const Response = await units.getUnits()
+        if (Response.status > 400) {
+            return this.setState(() => {
+                return {placeholder: "Something went wrong!"}
+            })
+        } else {
+            return this.setState(() => {
+                console.log(Response)
+                return {
+                    data: Response.data,
+                    loaded: true
                 }
-            )
+            })
+        }
+    }
+
+    componentDidMount() {
+        this.unitsData();
     }
 
     render() {

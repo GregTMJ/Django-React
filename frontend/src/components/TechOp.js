@@ -13,39 +13,46 @@ const Operation = new Operations()
 
 function TechOp() {
 
-    const location = useLocation();
-    const search = location.search;
-    const query = new URLSearchParams(search);
-    const machineRef = query.get('TechOp')
+    const location = useLocation().search;
+    const machineRef = new URLSearchParams(location).get('TechOp');
     const params = useParams().id;
 
     const [data, setData] = useState(null)
     const [cause, setCause] = useState(null)
     const [state, setState] = useState(false);
 
+    async function getUnitOperations(unitId) {
+        const unitOperationsResponse = await Operation.getOperations(unitId);
+        setData(unitOperationsResponse.data);
+    }
+
+    async function getUnitDownCause(unitId) {
+        const unitDownCauseResponse = await Operation.getDownCause(unitId);
+        setCause(unitDownCauseResponse.data);
+    }
+
+    async function getOperations() {
+        const operationsResponse = await Operation.getUnits()
+        const operationsData = operationsResponse.data
+        if (operationsData) {
+            for (let i = 0; i < operationsData.length; i++) {
+                if (params == operationsData[i].unit_ref && machineRef == operationsData[i].unit_name) {
+                    setState(true);
+                    await Promise.all([
+                        getUnitOperations(params), getUnitDownCause(params)
+                    ])
+                }
+            }
+        }
+    }
+
 
     useEffect(() => {
         if (machineRef) {
-
-            Operation.getUnits().then(res => {
-                if (res.data) {
-                    for (let i = 0; i < res.data.length; i++) {
-                        if (params == res.data[i].unit_ref && machineRef == res.data[i].unit_name) {
-                            setState(true);
-                            Operation.getOperations(params).then(response => {
-                                setData(response.data);
-                                techResultTable(data, machineRef)
-                            })
-
-                            Operation.getDownCause(params).then(response => {
-                                setCause(response.data);
-                                stopCauseTable(cause, machineRef)
-                            })
-                        }
-                    }
-
-                }
-            })
+            getOperations().then(() => {
+                techResultTable(data, machineRef);
+                stopCauseTable(cause, machineRef)
+            });
         }
     }, [])
 
@@ -58,7 +65,7 @@ function TechOp() {
     return (
         <div>
             <h1>
-                {query.get('TechOp')}
+                {machineRef}
             </h1>
             <div>
                 <Table className={"Datatable"}>
